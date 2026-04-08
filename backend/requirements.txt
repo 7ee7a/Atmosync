@@ -6,3 +6,4 @@ psycopg2-binary>=2.9.0
 alembic>=1.11.0
 httpx>=0.25.0
 earthengine-api>=0.1.370
+shapely>=2.0.0

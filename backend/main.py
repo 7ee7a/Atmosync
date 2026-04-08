@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from typing import Dict, Any
 from .database import engine, Base, get_db
 from .services.strasbourg import fetch_openaq_pm25, fetch_sentinel5p_no2_mock
-
+from .services.exposure import calculate_route_exposure
 # Create models
 Base.metadata.create_all(bind=engine)
 
@@ -37,3 +38,14 @@ async def read_atmosphere_data():
         "sentinel5p_no2": sentinel_data
     }
 
+@app.post("/api/exposure/compute")
+async def compute_exposure(route_geojson: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Accepts a GeoJSON LineString (e.g. standard walking route) and calculates
+    cumulative exposure mapping against AtmosphericGrid data.
+    """
+    try:
+        result = calculate_route_exposure(route_geojson, db)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
