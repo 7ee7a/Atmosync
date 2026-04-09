@@ -41,3 +41,11 @@ npm install
 npm run dev
 ```
 The frontend will be available at `http://localhost:5173`.
+
+### 4. Jump Start all services at once.
+
+Navigate to the root and run the following command in the root terminal.
+
+```bash
+.\start.bat
+```

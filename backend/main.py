@@ -1,12 +1,7 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
+from fastapi import FastAPI
 from typing import Dict, Any
-from .database import engine, Base, get_db
-from .services.strasbourg import fetch_openaq_pm25, fetch_sentinel5p_no2_mock
-from .services.exposure import calculate_route_exposure
-# Create models
-Base.metadata.create_all(bind=engine)
+from services.strasbourg import fetch_openaq_pm25, fetch_sentinel5p_no2_mock
+from services.exposure import calculate_route_exposure
 
 app = FastAPI(title="AEROS API")
 
@@ -15,13 +10,8 @@ def read_root():
     return {"status": "ok", "message": "AEROS API is running"}
 
 @app.get("/api/db-check")
-def read_db_check(db: Session = Depends(get_db)):
-    try:
-        # Check if PostGIS extension is installed
-        result = db.execute(text("SELECT postgis_version()")).scalar()
-        return {"status": "ok", "postgis_version": result}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+def read_db_check():
+    return {"status": "ok", "message": "Database is running in mock offline mode"}
 
 @app.get("/api/data/atmosphere")
 async def read_atmosphere_data():
@@ -39,13 +29,13 @@ async def read_atmosphere_data():
     }
 
 @app.post("/api/exposure/compute")
-async def compute_exposure(route_geojson: Dict[str, Any], db: Session = Depends(get_db)):
+async def compute_exposure(route_geojson: Dict[str, Any]):
     """
     Accepts a GeoJSON LineString (e.g. standard walking route) and calculates
     cumulative exposure mapping against AtmosphericGrid data.
     """
     try:
-        result = calculate_route_exposure(route_geojson, db)
+        result = calculate_route_exposure(route_geojson)
         return {"status": "success", "data": result}
     except Exception as e:
         return {"status": "error", "message": str(e)}
